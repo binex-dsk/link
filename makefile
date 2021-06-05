@@ -22,7 +22,7 @@ test:
 
 run: gen build
 	@clear
-	@env $(ENV) ./$(BIN) -v -url https://dev.fsh.ee -port 8080 -db /tmp/link_test_db_1.sql -seed secret
+	@env $(ENV) ./$(BIN) -v -demo -copy "2021 i@fsh.ee" -url https://dev.fsh.ee -port 8080 -db /tmp/link_test_db_1.sql -seed secret
 
 dev:
 	@find . -type f | grep -E '(.*)\.(go|html)' | entr -cr make run

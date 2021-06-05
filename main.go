@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"hash/maphash"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -115,13 +116,15 @@ func (db DB) DelLink(smol, del string) error {
 }
 
 type controller struct {
-	log *log.Logger
-	db  DB
-	url string
+	log       *log.Logger
+	db        DB
+	demo      bool
+	url, copy string
+	tmpl      *template.Template
 }
 
-func NewController(logger *log.Logger, db DB, url string) controller {
-	return controller{logger, db, strings.TrimRight(url, "/")}
+func NewController(logger *log.Logger, db DB, demo bool, url, copy string, tmpl *template.Template) controller {
+	return controller{logger, db, demo, strings.TrimRight(url, "/"), copy, tmpl}
 }
 
 func (c controller) Err(rw http.ResponseWriter, r *http.Request, err error) {
@@ -142,8 +145,15 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		switch strings.TrimRight(r.URL.Path, "/") {
 
 		case "":
-			rw.Header().Add("Content-Type", "text/html")
-			rw.Write([]byte(fmt.Sprintf(indexTemplate, c.url, c.url, c.url)))
+			data := map[string]interface{}{
+				"URL":  c.url,
+				"Demo": c.demo,
+				"Copy": c.copy,
+			}
+			if err := c.tmpl.Execute(rw, data); err != nil {
+				c.Err(rw, r, err)
+				return
+			}
 			return
 
 		case "/favicon.ico":
@@ -229,10 +239,12 @@ func main() {
 		startupLogger     = log.New(os.Stdout, logPrefix, 0)
 		applicationLogger = log.New(ioutil.Discard, logPrefix, 0)
 		v                 = flag.Bool("v", false, "verbose logging")
+		demo              = flag.Bool("demo", false, "turn on demo mode")
 		port              = flag.Uint("port", 8080, "port to listen on")
 		dbFilePath        = flag.String("db", "", "sqlite database filepath: required")
 		url               = flag.String("url", "", "service url: required")
 		hashSeed          = flag.String("seed", "", "hash seed: required")
+		copy              = flag.String("copy", "", "copyright information")
 	)
 	flag.Parse()
 	if *dbFilePath == "" || *url == "" || *hashSeed == "" {
@@ -247,7 +259,12 @@ func main() {
 		startupLogger.Fatal(err)
 		return
 	}
-	http.Handle("/", NewController(applicationLogger, db, *url))
+	tmpl, err := template.New("").Parse(indexTemplate)
+	if err != nil {
+		startupLogger.Fatal(err)
+		return
+	}
+	http.Handle("/", NewController(applicationLogger, db, *demo, *url, *copy, tmpl))
 	startupLogger.Println("listening on port", *port)
 	startupLogger.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }

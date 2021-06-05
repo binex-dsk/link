@@ -29,13 +29,17 @@ A Minimal, SQLite-Backed URL Shortener
 <pre><code>| Examples:
 | 
 | 1. Create a short link to https://duckduckgo.com
-| 	$ curl -d https://duckduckgo.com %s
-| 	%s/502fb5543c36014f
+| 	$ curl -d https://duckduckgo.com {{.URL}}
+| 	{{.URL}}/502fb5543c36014f
 | 
-| 2. Deleting a short link
+| 2. Create a short link with a custom path
+|	$ curl -d https://duckduckgo.com {{.URL}}/ddg
+| 	{{.URL}}/ddg
+| 
+| 3. Deleting a short link
 | 	$ TMP=$(mktemp)
 | 	$ # temp file will store header
-| 	$ LINK=$(curl -sS %s -d https://duckduckgo.com -D $TMP)
+| 	$ LINK=$(curl -sS {{.URL}} -d https://duckduckgo.com -D $TMP)
 | 	$ # the link has been successfully created
 | 	$ DEL=$(cat $TMP | grep -i delete-with | awk '{print$2}'| tr -d '\r')
 | 	$ # deletion key is stored in 'X-Delete-With' header.
@@ -47,6 +51,7 @@ A Minimal, SQLite-Backed URL Shortener
 | 	record not found
 | 	$ # the link has been successfully deleted.</code></pre>
 		
+{{if .Demo}}
 <p>
 Please note: this is an example deployment. If you attempt to create a short 
 link here you will receive a 401 Unauthorized. If you like the examples above
@@ -56,26 +61,27 @@ to do (one of the design goals). Below are instructions detailing how.
 		
 <pre><code>| How to self-host:
 | 
-| 1. Install dependencies:
-| 	a. The Go programming language:
+| 1. Install dependencies
+| 	a. The Go programming language
 | 		<a href='https://golang.org/doc/install'>https://golang.org/doc/install</a>
-| 	b. Git version control.
+| 	b. Git version control
 | 		<a href='https://git-scm.com/book/en/v2/Getting-Started-Installing-Git'>https://git-scm.com/book/en/v2/Getting-Started-Installing-Git</a>
 | 
 | 	* On FreeBSD this would be: 
 | 		$ pkg install -y go git 
 | 
-| 2. Fetch, complile, and execute the source code:
+| 2. Fetch, complile, and execute the source code
 | 	$ env GO111MODULE=off go get git.fsh.ee/i/link
 | 	$ env GO111MODULE=off go run git.fsh.ee/i/link -url https://your.domain.com -port 8080 -db /path/to/sqlite/file -seed secret
 | 
 | * The server is now running on localhost at port 8080.
 | * If the SQLite database at this filepath does not exist it will be created.
 | * All logging will be printed to standard error and standard output.</code></pre>
+{{end}}
 		
 <footer style='white-space: pre;'>Source code: 	<a href='https://fsh.ee/src'>fsh.ee/src</a>
-License:	AGPL v3
-Copy: 		2021 i@fsh.ee
-Made with:	Go, Vim, and FreeBSD
-Unrelated blog:	<a href='https://etc.fsh.ee/'>etc.fsh.ee</a>
+License:	AGPL v3{{if .Copy}}
+Copy: 		{{.Copy}}{{end}}
+Made with:	Go, Vim, and FreeBSD{{if .Demo}}
+Unrelated blog:	<a href='https://etc.fsh.ee/'>etc.fsh.ee</a>{{end}}
 </footer>
