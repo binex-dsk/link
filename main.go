@@ -40,13 +40,29 @@ import (
 //go:embed index.html
 var indexTemplate string
 
+type Retry struct {
+	retryAttemptCount int
+}
+
+func (r Retry) Do(f func() error) (err error) {
+	for i := 0; i < r.retryAttemptCount; i++ {
+		err = f()
+		if err == nil {
+			return nil
+		}
+
+	}
+	return err
+}
+
 type DB struct {
 	*gorm.DB
 	log      *log.Logger
 	hashSeed string
+	retry    Retry
 }
 
-func NewDB(l *log.Logger, dbFilePath, hashSeed string) (DB, error) {
+func NewDB(l *log.Logger, dbFilePath, hashSeed string, retry Retry) (DB, error) {
 	_, err := os.Stat(dbFilePath)
 	if os.IsNotExist(err) {
 		err := ioutil.WriteFile(dbFilePath, []byte{}, 0600)
@@ -61,7 +77,7 @@ func NewDB(l *log.Logger, dbFilePath, hashSeed string) (DB, error) {
 	if err != nil {
 		return DB{}, err
 	}
-	return DB{db, l, hashSeed}, db.AutoMigrate(&Link{})
+	return DB{db, l, hashSeed, retry}, db.AutoMigrate(&Link{})
 }
 
 type Link struct {
@@ -71,10 +87,15 @@ type Link struct {
 	Del  string `gorm:"unique"`
 }
 
-func (db DB) getHashShortLink(s fmt.Stringer) string {
-	h := maphash.Hash{}
-	h.WriteString(s.String())
-	return strings.TrimSpace(strings.TrimLeft(fmt.Sprintf("%#x\n", h.Sum64()), "0x"))
+func (db DB) getHashShortLink(s fmt.Stringer) (string, error) {
+	var (
+		h      = maphash.Hash{}
+		_, err = h.WriteString(s.String())
+	)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(strings.TrimLeft(fmt.Sprintf("%#x\n", h.Sum64()), "0x")), nil
 }
 
 func (db DB) getHashDeleteKey(s fmt.Stringer) string {
@@ -82,20 +103,20 @@ func (db DB) getHashDeleteKey(s fmt.Stringer) string {
 }
 
 func (db DB) NewLink(u *url.URL) (Link, error) {
-	return db.NewLinkWithShortLink(u, db.getHashShortLink(u))
-}
-
-func (db DB) NewLinkWithShortLink(u *url.URL, hash string) (Link, error) {
-	var (
-		link = Link{Big: u.String(), Smol: hash, Del: db.getHashDeleteKey(u)}
-		err  = db.Create(&link).Error
-	)
-	// TODO: If error due to unique issue should attempt to retry a few times.
+	h, err := db.getHashShortLink(u)
 	if err != nil {
-		db.log.Println(err)
 		return Link{}, err
 	}
-	return link, nil
+	return db.NewLinkWithShortLink(u, h)
+}
+
+func (db DB) NewLinkWithShortLink(u *url.URL, hash string) (link Link, err error) {
+	// Retry for unique errors.
+	err = db.retry.Do(func() error {
+		link = Link{Big: u.String(), Smol: hash, Del: db.getHashDeleteKey(u)}
+		return db.Create(&link).Error
+	})
+	return
 }
 
 func (db DB) GetLink(smol string) (l Link, e error) {
@@ -130,12 +151,12 @@ func NewController(logger *log.Logger, db DB, demo bool, url, copy string, tmpl 
 func (c controller) Err(rw http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		rw.WriteHeader(http.StatusNotFound)
-		rw.Write([]byte(err.Error()))
+		fmt.Fprintf(rw, "%s", err)
 		return
 	}
 	c.log.Println(err)
 	rw.WriteHeader(http.StatusInternalServerError)
-	rw.Write([]byte(err.Error()))
+	fmt.Fprintf(rw, "%s", err)
 }
 
 func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -184,7 +205,7 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		if u.Scheme != "http" && u.Scheme != "https" {
 			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte("URL must contain scheme. E.G. missing `http://` or `https://`."))
+			fmt.Fprintf(rw, "URL must contain scheme. E.G. missing `http://` or `https://`.")
 			return
 		}
 		var (
@@ -203,7 +224,7 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		rw.Header().Set("X-Delete-With", link.Del)
 		rw.WriteHeader(http.StatusFound)
-		rw.Write([]byte(fmt.Sprintf("%s/%s", c.url, link.Smol)))
+		fmt.Fprintf(rw, "%s/%s", c.url, link.Smol)
 		return
 
 	case http.MethodDelete:
@@ -214,7 +235,7 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		if len(b) < 1 {
 			rw.WriteHeader(http.StatusBadRequest)
-			rw.Write([]byte("Must include deletion key in DELETE body."))
+			fmt.Fprintf(rw, "Must include deletion key in DELETE body.")
 			return
 		}
 		var (
@@ -254,7 +275,7 @@ func main() {
 	if *v {
 		applicationLogger = log.New(os.Stdout, logPrefix, 0)
 	}
-	db, err := NewDB(applicationLogger, *dbFilePath, *hashSeed)
+	db, err := NewDB(applicationLogger, *dbFilePath, *hashSeed, Retry{3})
 	if err != nil {
 		startupLogger.Fatal(err)
 		return
