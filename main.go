@@ -44,6 +44,13 @@ type Retry struct {
 	retryAttemptCount int
 }
 
+func NewRetry(retryAttemptCount int) (Retry, error) {
+	if retryAttemptCount < 1 {
+		return Retry{}, errors.New("retry attempt count must be greater than zero")
+	}
+	return Retry{retryAttemptCount}, nil
+}
+
 func (r Retry) Do(f func() error) (err error) {
 	for i := 0; i < r.retryAttemptCount; i++ {
 		err = f()
@@ -275,7 +282,12 @@ func main() {
 	if *v {
 		applicationLogger = log.New(os.Stdout, logPrefix, 0)
 	}
-	db, err := NewDB(applicationLogger, *dbFilePath, *hashSeed, Retry{3})
+	retry, err := NewRetry(3)
+	if err != nil {
+		startupLogger.Fatal(err)
+		return
+	}
+	db, err := NewDB(applicationLogger, *dbFilePath, *hashSeed, retry)
 	if err != nil {
 		startupLogger.Fatal(err)
 		return
