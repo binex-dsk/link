@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang=en>
-	<head>
-		<title>A Minimal, SQLite-Backed URL Shortener</title>
-		<meta charset='utf-8'>
-		<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
-		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		<meta name='viewport' content='width=device-width, initial-scale=1'>
-		<meta content='A minimal, SQLite backed URL shortener. Made with Go, Vim, and FreeBSD.' name='description'>
-	</head>
-	<body style='font-family: monospace; max-width: 80ch;'>
+  <head>
+    <title>A Minimal, SQLite-Backed URL Shortener</title>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta content='A minimal, SQLite backed URL shortener. Made with Go, Vim, and FreeBSD.' name='description'>
+  </head>
+  <body style='font-family: monospace; max-width: 80ch;'>
 
 <header>
 A Minimal, SQLite-Backed URL Shortener
@@ -16,72 +16,153 @@ A Minimal, SQLite-Backed URL Shortener
 
 <style>
 @media (max-width: 1000px) {
-	pre code {
-		display: block;
-		max-width: 100%%;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-		padding: 0 5px 5px 0;
-	}
+  pre code {
+    display: block;
+    max-width: 100%%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 5px 5px 0;
+  }
 }
 </style>
 
 <pre><code>| Examples:
-| 
+|
 | 1. Create a short link to https://duckduckgo.com
-| 	$ curl -d https://duckduckgo.com {{.URL}}
-| 	{{.URL}}/502fb5543c36014f
-| 
+|   $ curl -d https://duckduckgo.com {{.URL}}
+|   {{.URL}}/502fb5543c36014f
+|
 | 2. Create a short link with a custom path
-|	$ curl -d https://duckduckgo.com {{.URL}}/ddg
-| 	{{.URL}}/ddg
-| 
-| 3. Deleting a short link
-| 	$ TMP=$(mktemp)
-| 	$ # temp file will store header
-| 	$ LINK=$(curl -sS {{.URL}} -d https://duckduckgo.com -D $TMP)
-| 	$ # the link has been successfully created
-| 	$ DEL=$(cat $TMP | grep -i delete-with | awk '{print$2}'| tr -d '\r')
-| 	$ # deletion key is stored in 'X-Delete-With' header.
-| 	$ curl $LINK
-| 	&lt;a href=&quot;https://duckduckgo.com&quot;&gt;Permanent Redirect&lt;/a&gt;.
-| 	$ # the link is working as expected
-| 	$ curl $LINK -X DELETE -d $DEL
-| 	$ curl $LINK
-| 	record not found
-| 	$ # the link has been successfully deleted.</code></pre>
-		
+|  $ curl -d https://duckduckgo.com {{.URL}}/ddg
+|   {{.URL}}/ddg
+|
+| 3. Create a short link to https://duckduckgo.com uaing a query string
+|   $ curl {{.URL}}?https://duckduckgo.com
+|   {{.URL}}/1acd382417199d7e
+|
+| 4. Create a short link with a custom path using a query string
+|   $ curl {{.URL}}/ddg?https://duckduckgo.com
+|   {{.URL}}/ddg
+|
+| 5. Deleting a short link
+|   $ TMP=$(mktemp)
+|   $ # temp file will store header
+|   $ LINK=$(curl -sS {{.URL}} -d https://duckduckgo.com -D $TMP)
+|   $ # the link has been successfully created
+|   $ DEL=$(cat $TMP | grep -i delete-with | awk '{print$2}'| tr -d '\r')
+|   $ # deletion key is stored in 'X-Delete-With' header.
+|   $ curl $LINK
+|   &lt;a href=&quot;https://duckduckgo.com&quot;&gt;Permanent Redirect&lt;/a&gt;.
+|   $ # the link is working as expected
+|   $ curl $LINK -X DELETE -d $DEL
+|   $ curl $LINK
+|   record not found
+|   $ # the link has been successfully deleted.</code></pre>
+
 {{if .Demo}}
 <p>
-Please note: this is an example deployment. If you attempt to create a short 
+Please note: this is an example deployment. If you attempt to create a short
 link here you will receive a 401 Unauthorized. If you like the examples above
 and want to use this URL shortener you should self-host an instance. It's easy
 to do (one of the design goals). Below are instructions detailing how.
 <p>
-		
-<pre><code>| How to self-host:
-| 
-| 1. Install dependencies
-| 	a. The Go programming language
-| 		<a href='https://golang.org/doc/install'>https://golang.org/doc/install</a>
-| 	b. Git version control
-| 		<a href='https://git-scm.com/book/en/v2/Getting-Started-Installing-Git'>https://git-scm.com/book/en/v2/Getting-Started-Installing-Git</a>
-| 
-| 	* On FreeBSD this would be: 
-| 		$ pkg install -y go git 
-| 
-| 2. Fetch, complile, and execute the source code
-| 	$ env GO111MODULE=off go get git.fsh.ee/i/link
-| 	$ env GO111MODULE=off go run git.fsh.ee/i/link -url https://your.domain.com -port 8080 -db /path/to/sqlite/file -seed secret
-| 
-| * The server is now running on localhost at port 8080.
-| * If the SQLite database at this filepath does not exist it will be created.
-| * All logging will be printed to standard error and standard output.</code></pre>
 {{end}}
-		
-<footer style='white-space: pre;'>Source code: 	<a href='https://fsh.ee/src'>fsh.ee/src</a>
-License:	AGPL v3{{if .Copy}}
-Copy: 		{{.Copy}}{{end}}
-Made with:	Go, Vim, and FreeBSD{{if .Demo}}
-Unrelated blog:	<a href='https://etc.fsh.ee/'>etc.fsh.ee</a>{{end}}
+
+<pre><code>| How to self-host:
+|
+| 1. Install dependencies
+|   a. The Go programming language
+|     <a href='https://golang.org/doc/install'>https://golang.org/doc/install</a>
+|   b. Git version control
+|     <a href='https://git-scm.com/book/en/v2/Getting-Started-Installing-Git'>https://git-scm.com/book/en/v2/Getting-Started-Installing-Git</a>
+|
+|   * Most distributions should have Go and Git in their repositories,
+|     simply as go and git.
+|     Install these through your package manager, e.g.:
+|       # pacman -S go git
+|       # emerge --ask dev-lang/go dev-vcs/git
+|       # apt install go git
+|
+| 2. Fetch and compile the source code
+|   # env GO111MODULE=off go get git.swurl.xyz/swirl/link
+|
+| 3. Copy the binary to your binary directory
+|   # cp $GOPATH/bin/link /usr/local/bin/linkserv
+|   # # Named linkserv to prevent conflicts with GNU link
+|
+| 4. Create a directory to store your database:
+|  # mkdir -p /srv/link
+|
+| 5. (optional) Create a systemd service:
+|   # vim /etc/systemd/system/link.service
+[Unit]
+Description=link shortener
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/linkserv -url http://your.doma.in -db /srv/link/link.db -seed "secret"
+
+[Install]
+WantedBy=multi-user.target
+|
+|   * You can also create an equivalent for openrc, runit, etc.
+|
+| 6. (optional) Enable and start
+|
+| 7. Or, run it manually:
+|   # linkserv -url http://your.doma.in -db /srv/link/link.db -seed "secret"
+|
+| * The server is now running on localhost at port 8080.
+| * If the SQLite database does not exist, it will be created.
+| * All logging will be printed to standard error and standard output.
+
+| Set up an NGINX reverse proxy:
+|
+| 1. Install dependencies
+|    * nginx
+|    * certbot
+|    * certbot nginx plugin
+|
+|    * Most distributions should have these in their repositories:
+|      # pacman -S nginx certbot-nginx
+|      # emerge --ask www-servers/nginx app-crypt/certbot-nginx
+|      # apt install nginx python-certbot-nginx
+|
+| 2. Create the site file
+|   # vim /etc/nginx/sites-available/link
+server {
+    rewrite_log on;
+    server_name your.doma.in;
+
+    location / {
+        proxy_pass http://localhost:8080; # or whatever port you're running link on
+    }
+
+    listen 80;
+}
+|
+| 3. Enable the site
+|   # ln -s /etc/nginx/sites-{available,enabled}/link
+|
+| 4. Enable https for the site
+|   # certbot --nginx -d your.doma.in
+|
+| 4. Enable and start nginx
+|   # systemctl enable --now nginx
+|   # # Or, if you already have nginx running, reload it:
+|   # systemctl reload nginx
+|
+| * Your site should now be running on https://your.doma.in.
+| * To run in a subdirectory, simply put the proxy_pass in the subdirectory, e.g.:
+location /shortener {
+    proxy_pass http://localhost:8080;
+}
+| * If you want to use another HTTP server, then create the equivalent for that HTTP server.
+</code></pre>
+
+<footer style='white-space: pre;'>Source code:  <a href='https://short.swurl.xyz/src'>short.swurl.xyz/src</a></a>
+License:      AGPL v3{{if .Copy}}
+Copy:     {{.Copy}}{{end}}
+Made with:    Go, Neovim, and Gentoo/Arch Linux
 </footer>
+</html>

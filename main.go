@@ -170,34 +170,67 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
-		switch strings.TrimRight(r.URL.Path, "/") {
+        st := strings.TrimRight(r.URL.Path, "/")
+        rq := r.URL.RawQuery
+        if rq != "" {
+            u, err := url.Parse(rq)
+            if err != nil {
+                c.Err(rw, r, err)
+                return
+            }
+            if u.Scheme != "http" && u.Scheme != "https" {
+                rw.WriteHeader(http.StatusBadRequest)
+                fmt.Fprintf(rw, "URL must contain scheme, e.g. `http://` or `https://`.")
+                return
+            }
+            var (
+                link Link
+                h    = strings.Trim(r.URL.Path, "/")
+            )
+            if h != "" {
+                link, err = c.db.NewLinkWithShortLink(u, h)
 
-		case "":
-			data := map[string]interface{}{
-				"URL":  c.url,
-				"Demo": c.demo,
-				"Copy": c.copy,
-			}
-			if err := c.tmpl.Execute(rw, data); err != nil {
-				c.Err(rw, r, err)
-				return
-			}
-			return
+            } else {
+                link, err = c.db.NewLink(u)
+            }
+            if err != nil {
+                c.Err(rw, r, err)
+                return
+            }
+            rw.Header().Set("X-Delete-With", link.Del)
+            rw.WriteHeader(http.StatusFound)
+            fmt.Fprintf(rw, "%s/%s", c.url, link.Smol)
+            return
+        } else {
+            switch st {
 
-		case "/favicon.ico":
-			http.NotFound(rw, r)
-			return
+            case "":
+                data := map[string]interface{}{
+                    "URL":  c.url,
+                    "Demo": c.demo,
+                    "Copy": c.copy,
+                }
+                if err := c.tmpl.Execute(rw, data); err != nil {
+                    c.Err(rw, r, err)
+                    return
+                }
+                return
 
-		default:
-			link, err := c.db.GetLink(strings.TrimLeft(r.URL.Path, "/"))
-			if err != nil {
-				c.Err(rw, r, err)
-				return
-			}
-			http.Redirect(rw, r, link.Big, http.StatusPermanentRedirect)
-			return
+            case "/favicon.ico":
+                http.NotFound(rw, r)
+                return
 
-		}
+            default:
+                link, err := c.db.GetLink(strings.TrimLeft(r.URL.Path, "/"))
+                if err != nil {
+                    c.Err(rw, r, err)
+                    return
+                }
+                http.Redirect(rw, r, link.Big, http.StatusPermanentRedirect)
+                return
+
+            }
+        }
 
 	case http.MethodPost:
 		b, err := ioutil.ReadAll(r.Body)
@@ -212,7 +245,7 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		if u.Scheme != "http" && u.Scheme != "https" {
 			rw.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(rw, "URL must contain scheme. E.G. missing `http://` or `https://`.")
+			fmt.Fprintf(rw, "URL must contain scheme, e.g. `http://` or `https://`.")
 			return
 		}
 		var (
@@ -270,7 +303,7 @@ func main() {
 		demo              = flag.Bool("demo", false, "turn on demo mode")
 		port              = flag.Uint("port", 8080, "port to listen on")
 		dbFilePath        = flag.String("db", "", "sqlite database filepath: required")
-		url               = flag.String("url", "", "service url: required")
+        url               = flag.String("url", "", "URL which the server will be running on: required")
 		hashSeed          = flag.String("seed", "", "hash seed: required")
 		copy              = flag.String("copy", "", "copyright information")
 	)
