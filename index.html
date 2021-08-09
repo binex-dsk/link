@@ -44,7 +44,11 @@ A Minimal, SQLite-Backed URL Shortener
 |   $ curl {{.URL}}/ddg?https://duckduckgo.com
 |   {{.URL}}/ddg
 |
-| 5. Deleting a short link
+| 5. You can also pass an encoded URL:
+|   $ curl {{.URL}}?https%3A%2F%2Fduckduckgo.com
+|   {{.URL}}/1dc4cb37e81de396
+|
+| 6. Deleting a short link
 |   $ TMP=$(mktemp)
 |   $ # temp file will store header
 |   $ LINK=$(curl -sS {{.URL}} -d https://duckduckgo.com -D $TMP)

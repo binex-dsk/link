@@ -171,7 +171,11 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	case http.MethodGet:
         st := strings.TrimRight(r.URL.Path, "/")
-        rq := r.URL.RawQuery
+        rq, err := url.QueryUnescape(r.URL.RawQuery)
+        if err != nil {
+            c.Err(rw, r, err)
+            return
+        }
         if rq != "" {
             u, err := url.Parse(rq)
             if err != nil {
