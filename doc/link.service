@@ -1,0 +1,9 @@
+[Unit]
+Description=serve link instance
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/linkserv -url https://your.doma.in -db /srv/link/link.db -seed "secret"
+
+[Install]
+WantedBy=multi-user.target

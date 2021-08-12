@@ -94,26 +94,23 @@ to do (one of the design goals). Below are instructions detailing how.
 |   # cp $GOPATH/bin/link /usr/local/bin/linkserv
 |   # # Named linkserv to prevent conflicts with GNU link
 |
-| 4. Create a directory to store your database:
+| 4. Create a directory to store your database
 |  # mkdir -p /srv/link
 |
-| 5. (optional) Create a systemd service:
-|   # vim /etc/systemd/system/link.service
-[Unit]
-Description=link shortener
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/linkserv -url http://your.doma.in -db /srv/link/link.db -seed "secret"
-
-[Install]
-WantedBy=multi-user.target
-|
+| 5. (optional) Copy the example systemd service
+|   # cp doc/link.service /etc/systemd/system/
 |   * You can also create an equivalent for openrc, runit, etc.
 |
-| 6. (optional) Enable and start
+| 6. Change the domain to reflect your setup
+|   # sed -i 's/your.doma.in/[DOMAIN HERE]/g' /etc/systemd/system/link.service
 |
-| 7. Or, run it manually:
+| 7. Change the seed to something secure
+|   # sed -i 's/secret/SecretPasswordHere/g' /etc/systemd/system/link.service
+|
+| 8. Enable and start the service
+|   # systemctl enable --now link
+|
+| 9. Or, run it manually
 |   # linkserv -url http://your.doma.in -db /srv/link/link.db -seed "secret"
 |
 | * The server is now running on localhost at port 8080.
@@ -132,26 +129,19 @@ WantedBy=multi-user.target
 |      # emerge --ask www-servers/nginx app-crypt/certbot-nginx
 |      # apt install nginx python-certbot-nginx
 |
-| 2. Create the site file
-|   # vim /etc/nginx/sites-available/link
-server {
-    rewrite_log on;
-    server_name your.doma.in;
-
-    location / {
-        proxy_pass http://localhost:8080; # or whatever port you're running link on
-    }
-
-    listen 80;
-}
+| 2. Copy the example site file
+|   # cp doc/link.nginx.conf /etc/nginx/sites-available/link
 |
-| 3. Enable the site
+| 3. Change the domain to reflect your setup
+|   # sed -i 's/your.doma.in/[DOMAIN HERE]/g' /etc/nginx/sites-available/link
+|
+| 4. Enable the site
 |   # ln -s /etc/nginx/sites-{available,enabled}/link
 |
-| 4. Enable https for the site
+| 5. Enable https for the site
 |   # certbot --nginx -d your.doma.in
 |
-| 4. Enable and start nginx
+| 6. Enable and start nginx
 |   # systemctl enable --now nginx
 |   # # Or, if you already have nginx running, reload it:
 |   # systemctl reload nginx
