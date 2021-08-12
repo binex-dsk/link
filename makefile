@@ -1,12 +1,13 @@
-BIN=out
-CC=go1.17beta1
+BIN=linkserv
+CC=go
 
-all: setup vendor gen build
+prefix=/usr/local
+confdir=/etc
+systemd_dir=${DESTDIR}${confdir}/systemd/system
+nginx_dir=${DESTDIR}${confdir}/nginx
+bindir=${DESTDIR}${prefix}/bin
 
-setup:
-	@env GOOD=off go get golang.org/dl/$(CC)
-	@env GOOD=off $(CC) download
-	#@env GO111MODULE=off $(CC) get github.com/golangci/golangci-lint/cmd/golangci-lint
+all: vendor gen build
 
 vendor: go.mod go.sum
 	@$(CC) mod tidy
@@ -15,18 +16,30 @@ vendor: go.mod go.sum
 build:
 	@$(CC) build -ldflags='-s -w' -o $(BIN)
 
-gen: 
+gen:
 	@$(CC) generate ./...
 
-test: 
+test:
 	@env $(ENV) $(CC) test ./... -cover -count 1
 
 run: lint build
 	@clear
-	@env $(ENV) ./$(BIN) -v -demo -copy "2021 i@fsh.ee" -url https://dev.fsh.ee -port 8080 -db /tmp/link_test_db_1.sql -seed secret
+	@env $(ENV) ./$(BIN) -v -demo -copy "2021 swurl@swurl.xyz" -url https://short.swurl.xyz -port 8080 -db /tmp/link.db -seed "secret"
 
 dev:
 	@find . -type f | grep -E '(.*)\.(go|html)' | entr -cr make run
 
-lint: 
+lint:
 	@golangci-lint run ./...
+
+install-nginx:
+	@install -Dm644 doc/link.nginx.conf ${nginx_dir}/sites-available/link
+
+install-systemd:
+	@install -Dm644 doc/link.service ${systemd_dir}/link.service
+	@install -Dm644 doc/link.conf ${DESTDIR}/${confdir}/link.conf
+
+install-bin:
+	@install -Dm755 ${BIN} ${bindir}/${BIN}
+
+install: build install-bin install-nginx install-systemd

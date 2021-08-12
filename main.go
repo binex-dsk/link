@@ -1,5 +1,5 @@
 // A URL Shortener called Link.
-// Copyright (C) 2021 i@fsh.ee
+// Copyright (C) 2021 swurl@swurl.xyz
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by

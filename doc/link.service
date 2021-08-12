@@ -3,7 +3,8 @@ Description=serve link instance
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/linkserv -url https://your.doma.in -db /srv/link/link.db -seed "secret"
+EnvironmentFile=/etc/link.conf
+ExecStart=/bin/sh -c '"${BIN}" -copy "${COPY}" -db "${DB}" -port ${PORT} -seed "${SEED}" -url "${URL}"'
 
 [Install]
 WantedBy=multi-user.target

@@ -87,31 +87,20 @@ to do (one of the design goals). Below are instructions detailing how.
 |       # emerge --ask dev-lang/go dev-vcs/git
 |       # apt install go git
 |
-| 2. Fetch and compile the source code
-|   # env GO111MODULE=off go get git.swurl.xyz/swirl/link
+| 2. Clone the source code
+|   # git clone https://git.swurl.xyz/swirl/link
 |
-| 3. Copy the binary to your binary directory
-|   # cp $GOPATH/bin/link /usr/local/bin/linkserv
-|   # # Named linkserv to prevent conflicts with GNU link
+| 3. Compile
+|   # cd link && make
 |
-| 4. Create a directory to store your database
-|  # mkdir -p /srv/link
+| 4. Install
+|   # make install
 |
-| 5. (optional) Copy the example systemd service
-|   # cp doc/link.service /etc/systemd/system/
-|   * You can also create an equivalent for openrc, runit, etc.
+| 5. Change the configuration to reflect your desired options
+|   # vim /etc/link.conf
 |
-| 6. Change the domain to reflect your setup
-|   # sed -i 's/your.doma.in/[DOMAIN HERE]/g' /etc/systemd/system/link.service
-|
-| 7. Change the seed to something secure
-|   # sed -i 's/secret/SecretPasswordHere/g' /etc/systemd/system/link.service
-|
-| 8. Enable and start the service
+| 6. Enable and start the service
 |   # systemctl enable --now link
-|
-| 9. Or, run it manually
-|   # linkserv -url http://your.doma.in -db /srv/link/link.db -seed "secret"
 |
 | * The server is now running on localhost at port 8080.
 | * If the SQLite database does not exist, it will be created.
@@ -129,8 +118,8 @@ to do (one of the design goals). Below are instructions detailing how.
 |      # emerge --ask www-servers/nginx app-crypt/certbot-nginx
 |      # apt install nginx python-certbot-nginx
 |
-| 2. Copy the example site file
-|   # cp doc/link.nginx.conf /etc/nginx/sites-available/link
+| 2. Install if you haven't already
+|   # make install
 |
 | 3. Change the domain to reflect your setup
 |   # sed -i 's/your.doma.in/[DOMAIN HERE]/g' /etc/nginx/sites-available/link
@@ -156,7 +145,7 @@ location /shortener {
 
 <footer style='white-space: pre;'>Source code:  <a href='https://short.swurl.xyz/src'>short.swurl.xyz/src</a></a>
 License:      AGPL v3{{if .Copy}}
-Copy:     {{.Copy}}{{end}}
+Copy:         {{.Copy}}{{end}}
 Made with:    Go, Neovim, and Gentoo/Arch Linux
 </footer>
 </html>
