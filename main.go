@@ -166,6 +166,37 @@ func (c controller) Err(rw http.ResponseWriter, r *http.Request, err error) {
 	fmt.Fprintf(rw, "%s", err)
 }
 
+func (c controller) CreateShortLink(rw http.ResponseWriter, r *http.Request, rq string) {
+    u, err := url.Parse(rq)
+    if err != nil {
+        c.Err(rw, r, err)
+        return
+    }
+    if u.Scheme != "http" && u.Scheme != "https" {
+        rw.WriteHeader(http.StatusBadRequest)
+        fmt.Fprintf(rw, "URL must contain scheme, e.g. `http://` or `https://`.")
+        return
+    }
+    var (
+        link Link
+        h    = strings.Trim(r.URL.Path, "/")
+    )
+    if h != "" {
+        link, err = c.db.NewLinkWithShortLink(u, h)
+
+    } else {
+        link, err = c.db.NewLink(u)
+    }
+    if err != nil {
+        c.Err(rw, r, err)
+        return
+    }
+    rw.Header().Set("X-Delete-With", link.Del)
+    rw.WriteHeader(http.StatusFound)
+    fmt.Fprintf(rw, "%s/%s", c.url, link.Smol)
+    return
+}
+
 func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
@@ -177,33 +208,7 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
             return
         }
         if rq != "" {
-            u, err := url.Parse(rq)
-            if err != nil {
-                c.Err(rw, r, err)
-                return
-            }
-            if u.Scheme != "http" && u.Scheme != "https" {
-                rw.WriteHeader(http.StatusBadRequest)
-                fmt.Fprintf(rw, "URL must contain scheme, e.g. `http://` or `https://`.")
-                return
-            }
-            var (
-                link Link
-                h    = strings.Trim(r.URL.Path, "/")
-            )
-            if h != "" {
-                link, err = c.db.NewLinkWithShortLink(u, h)
-
-            } else {
-                link, err = c.db.NewLink(u)
-            }
-            if err != nil {
-                c.Err(rw, r, err)
-                return
-            }
-            rw.Header().Set("X-Delete-With", link.Del)
-            rw.WriteHeader(http.StatusFound)
-            fmt.Fprintf(rw, "%s/%s", c.url, link.Smol)
+            c.CreateShortLink(rw, r, rq)
             return
         } else {
             switch st {
@@ -242,34 +247,8 @@ func (c controller) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			c.Err(rw, r, err)
 			return
 		}
-		u, err := url.Parse(string(b))
-		if err != nil {
-			c.Err(rw, r, err)
-			return
-		}
-		if u.Scheme != "http" && u.Scheme != "https" {
-			rw.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(rw, "URL must contain scheme, e.g. `http://` or `https://`.")
-			return
-		}
-		var (
-			link Link
-			h    = strings.Trim(r.URL.Path, "/")
-		)
-		if h != "" {
-			link, err = c.db.NewLinkWithShortLink(u, h)
-
-		} else {
-			link, err = c.db.NewLink(u)
-		}
-		if err != nil {
-			c.Err(rw, r, err)
-			return
-		}
-		rw.Header().Set("X-Delete-With", link.Del)
-		rw.WriteHeader(http.StatusFound)
-		fmt.Fprintf(rw, "%s/%s", c.url, link.Smol)
-		return
+        c.CreateShortLink(rw, r, string(b))
+        return
 
 	case http.MethodDelete:
 		b, err := ioutil.ReadAll(r.Body)
