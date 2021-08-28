@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=/etc/link.conf
-ExecStart=/bin/sh -c '"${BIN}" -copy "${COPY}" -db "${DB}" -port ${PORT} -seed "${SEED}" -url "${URL}"'
+ExecStart=/bin/sh -c '"${BIN}" -copy "${COPY}" -path "${DIR}" -port ${PORT} -seed "${SEED}" -url "${URL}"'
 
 [Install]
 WantedBy=multi-user.target

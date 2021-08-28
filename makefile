@@ -7,11 +7,7 @@ systemd_dir=${DESTDIR}${confdir}/systemd/system
 nginx_dir=${DESTDIR}${confdir}/nginx
 bindir=${DESTDIR}${prefix}/bin
 
-all: vendor gen build
-
-vendor: go.mod go.sum
-	@$(CC) mod tidy
-	@$(CC) mod vendor
+all: gen build
 
 build:
 	@$(CC) build -ldflags='-s -w' -o $(BIN)
@@ -24,7 +20,7 @@ test:
 
 run: lint build
 	@clear
-	@env $(ENV) ./$(BIN) -v -demo -copy "2021 swurl@swurl.xyz" -url https://short.swurl.xyz -port 8080 -db /tmp/link.db -seed "secret"
+	@env $(ENV) ./$(BIN) -v -demo -copy "2021 swurl@swurl.xyz" -url https://short.swurl.xyz -port 8080 -path /tmp/link -seed "secret"
 
 dev:
 	@find . -type f | grep -E '(.*)\.(go|html)' | entr -cr make run

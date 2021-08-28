@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang=en>
   <head>
-    <title>A Minimal, SQLite-Backed URL Shortener</title>
+    <title>A Minimal, Filesystem-Backed URL Shortener</title>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <meta content='A minimal, SQLite backed URL shortener. Made with Go, Vim, and FreeBSD.' name='description'>
+    <meta content='A super simple, minimal, and filesystem-backed URL Shortener.' name='description'>
   </head>
   <body style='font-family: monospace; max-width: 80ch;'>
 
 <header>
-A Minimal, SQLite-Backed URL Shortener
+A Minimal, Filesystem-Backed URL Shortener
 </header>
 
 <style>
@@ -50,98 +50,18 @@ A Minimal, SQLite-Backed URL Shortener
 |
 | 6. Deleting a short link
 |   $ TMP=$(mktemp)
-|   $ # temp file will store header
+|   $ # the temp file will store the header
 |   $ LINK=$(curl -sS {{.URL}} -d https://duckduckgo.com -D $TMP)
 |   $ # the link has been successfully created
 |   $ DEL=$(cat $TMP | grep -i delete-with | awk '{print$2}'| tr -d '\r')
-|   $ # deletion key is stored in 'X-Delete-With' header.
+|   $ # the deletion key is stored in the 'X-Delete-With' header
 |   $ curl $LINK
 |   &lt;a href=&quot;https://duckduckgo.com&quot;&gt;Permanent Redirect&lt;/a&gt;.
 |   $ # the link is working as expected
 |   $ curl $LINK -X DELETE -d $DEL
 |   $ curl $LINK
 |   record not found
-|   $ # the link has been successfully deleted.</code></pre>
-
-{{if .Demo}}
-<p>
-Please note: this is an example deployment. If you attempt to create a short
-link here you will receive a 401 Unauthorized. If you like the examples above
-and want to use this URL shortener you should self-host an instance. It's easy
-to do (one of the design goals). Below are instructions detailing how.
-<p>
-{{end}}
-
-<pre><code>| How to self-host:
-|
-| 1. Install dependencies
-|   a. The Go programming language
-|     <a href='https://golang.org/doc/install'>https://golang.org/doc/install</a>
-|   b. Git version control
-|     <a href='https://git-scm.com/book/en/v2/Getting-Started-Installing-Git'>https://git-scm.com/book/en/v2/Getting-Started-Installing-Git</a>
-|
-|   * Most distributions should have Go and Git in their repositories,
-|     simply as go and git.
-|     Install these through your package manager, e.g.:
-|       # pacman -S go git
-|       # emerge --ask dev-lang/go dev-vcs/git
-|       # apt install go git
-|
-| 2. Clone the source code
-|   # git clone https://git.swurl.xyz/swirl/link
-|
-| 3. Compile
-|   # cd link && make
-|
-| 4. Install
-|   # make install
-|
-| 5. Change the configuration to reflect your desired options
-|   # vim /etc/link.conf
-|
-| 6. Enable and start the service
-|   # systemctl enable --now link
-|
-| * The server is now running on localhost at port 8080.
-| * If the SQLite database does not exist, it will be created.
-| * All logging will be printed to standard error and standard output.
-
-| Set up an NGINX reverse proxy:
-|
-| 1. Install dependencies
-|    * nginx
-|    * certbot
-|    * certbot nginx plugin
-|
-|    * Most distributions should have these in their repositories:
-|      # pacman -S nginx certbot-nginx
-|      # emerge --ask www-servers/nginx app-crypt/certbot-nginx
-|      # apt install nginx python-certbot-nginx
-|
-| 2. Install if you haven't already
-|   # make install
-|
-| 3. Change the domain to reflect your setup
-|   # sed -i 's/your.doma.in/[DOMAIN HERE]/g' /etc/nginx/sites-available/link
-|
-| 4. Enable the site
-|   # ln -s /etc/nginx/sites-{available,enabled}/link
-|
-| 5. Enable https for the site
-|   # certbot --nginx -d your.doma.in
-|
-| 6. Enable and start nginx
-|   # systemctl enable --now nginx
-|   # # Or, if you already have nginx running, reload it:
-|   # systemctl reload nginx
-|
-| * Your site should now be running on https://your.doma.in.
-| * To run in a subdirectory, simply put the proxy_pass in the subdirectory, e.g.:
-location /shortener {
-    proxy_pass http://localhost:8080;
-}
-| * If you want to use another HTTP server, then create the equivalent for that HTTP server.
-</code></pre>
+|   $ # the link has been successfully deleted</code></pre>
 
 <footer style='white-space: pre;'>Source code:  <a href='https://short.swurl.xyz/src'>short.swurl.xyz/src</a></a>
 License:      AGPL v3{{if .Copy}}
