@@ -1,3 +1,6 @@
+# THIS PROJECT HAS BEEN SUPERSEDED
+This project has been superseded by [clink](https://git.swurl.xyz/swirl/clink). clink is much, much lighter, faster, and overall, better, than this. Please use it instead, no new features will be added to this version.
+
 Fork of [link](https://fsh.ee/) with extra features, a filesystem-based backend, and more.
 
 Please access this project on my [Gitea](https://git.swurl.xyz/swirl/link) instance, NOT GitHub.
